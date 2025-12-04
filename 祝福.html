@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>温馨提示 - 网页版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+            overflow: hidden; /* 防止滚动条出现 */
+        }
+        
+        .tip-window {
+            position: absolute;
+            width: 250px;
+            height: 120px;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            cursor: move; /* 鼠标样式 */
+            transition: all 0.3s ease;
+        }
+        
+        .tip-window:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tip-text {
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+            user-select: none; /* 禁止文字选中 */
+        }
+        
+        /* 关闭按钮样式 */
+        .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            font-size: 18px;
+            color: #666;
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .close-btn:hover {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        
+        /* 控制按钮样式 */
+        .control-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            background-color: #4a90e2;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .control-btn:hover {
+            background-color: #357abd;
+        }
+        
+        .control-btn.clear {
+            background-color: #ff6b6b;
+        }
+        
+        .control-btn.clear:hover {
+            background-color: #e55353;
+        }
+    </style>
+</head>
+<body>
+    <!-- 控制面板 -->
+    <div class="control-panel">
+        <button class="control-btn" id="createTips">生成温馨提示</button>
+        <button class="control-btn clear" id="clearAll">清空所有</button>
+    </div>
+
+    <script>
+        // 提示文字列表
+        const tips = [
+            '无灾无病', '保持微笑', '每天都要元气满满',
+            '记得按时吃饭', '保持好心情', '好好爱自己', '快乐幸福',
+            '梦想成真', '期待下一次见面', '愿你安好',
+            '顺顺利利', '心想事成', '愿所有烦恼都消失',
+            '事业有成', '身体健康', '天冷添衣，按时吃饭'
+        ];
+
+        // 背景颜色列表
+        const bgColors = [
+            'lightpink', 'skyblue', 'lightgreen', 'lavender', 
+            'lightyellow', 'plum', 'coral', 'bisque', 'aquamarine',
+            'mistyrose', 'honeydew', 'lavenderblush', 'oldlace'
+        ];
+
+        // 弹窗数量
+        const WINDOW_COUNT = 66;
+        // 弹窗大小
+        const WINDOW_WIDTH = 250;
+        const WINDOW_HEIGHT = 120;
+
+        // 创建单个温馨提示窗口
+        function createTipWindow() {
+            // 获取屏幕尺寸
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+
+            // 随机位置（确保窗口完全显示在屏幕内）
+            const x = Math.random() * (screenWidth - WINDOW_WIDTH);
+            const y = Math.random() * (screenHeight - WINDOW_HEIGHT);
+
+            // 随机选择提示语和背景色
+            const randomTip = tips[Math.floor(Math.random() * tips.length)];
+            const randomBg = bgColors[Math.floor(Math.random() * bgColors.length)];
+
+            // 创建窗口元素
+            const tipWindow = document.createElement('div');
+            tipWindow.className = 'tip-window';
+            tipWindow.style.left = `${x}px`;
+            tipWindow.style.top = `${y}px`;
+            tipWindow.style.backgroundColor = randomBg;
+
+            // 创建关闭按钮
+            const closeBtn = document.createElement('div');
+            closeBtn.className = 'close-btn';
+            closeBtn.textContent = '×';
+            closeBtn.onclick = () => tipWindow.remove();
+
+            // 创建提示文字
+            const tipText = document.createElement('div');
+            tipText.className = 'tip-text';
+            tipText.textContent = randomTip;
+
+            // 组装窗口
+            tipWindow.appendChild(closeBtn);
+            tipWindow.appendChild(tipText);
+            document.body.appendChild(tipWindow);
+
+            // 使窗口可拖动
+            makeDraggable(tipWindow);
+        }
+
+        // 使元素可拖动
+        function makeDraggable(element) {
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            element.addEventListener('mousedown', (e) => {
+                // 防止点击关闭按钮时触发拖动
+                if (e.target.classList.contains('close-btn')) return;
+                
+                isDragging = true;
+                // 计算鼠标相对于元素的位置
+                offsetX = e.clientX - element.getBoundingClientRect().left;
+                offsetY = e.clientY - element.getBoundingClientRect().top;
+                
+                // 将元素移到最上层
+                element.style.zIndex = 9999;
+                
+                // 阻止默认行为和事件冒泡
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                // 计算新位置
+                const x = e.clientX - offsetX;
+                const y = e.clientY - offsetY;
+                
+                // 更新元素位置
+                element.style.left = `${x}px`;
+                element.style.top = `${y}px`;
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+
+        // 批量创建提示窗口
+        function createMultipleTips(count = WINDOW_COUNT) {
+            // 清空现有窗口
+            clearAllTips();
+            
+            // 逐个创建窗口，添加延迟避免卡顿
+            let delay = 0;
+            for (let i = 0; i < count; i++) {
+                setTimeout(createTipWindow, delay);
+                delay += 700; //每700ms生成一个弹窗
+            }
+        }
+
+        // 清空所有提示窗口
+        function clearAllTips() {
+            const allTips = document.querySelectorAll('.tip-window');
+            allTips.forEach(tip => tip.remove());
+        }
+
+        // 绑定按钮事件
+        document.getElementById('createTips').addEventListener('click', createMultipleTips);
+        document.getElementById('clearAll').addEventListener('click', clearAllTips);
+
+        // 页面加载时自动创建提示窗口
+        window.addEventListener('load', () => {
+            createMultipleTips();
+        });
+    </script>
+</body>
+</html>
